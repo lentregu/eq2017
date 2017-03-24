@@ -5,8 +5,15 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/lentregu/Equinox/HumanIdentification/comms"
-	"github.com/lentregu/Equinox/oxford"
+	"github.com/lentregu/eq2017/HumanIdentification/comms"
+	"github.com/lentregu/eq2017/oxford"
+	"io"
+)
+type printOption int
+
+const (
+	pretty printOption = iota
+	normal
 )
 
 const (
@@ -68,6 +75,8 @@ func Whois(w http.ResponseWriter, r *http.Request) {
 	var similarList []oxford.FaceSimilarResponseType = nil
 	binaryImg, err := oxford.Base64ToByteArray(requestBody.Base64Image)
 
+	var email string = ""
+
 	if err == nil {
 		faceID, _ := faceService.DetectBin(binaryImg)
 
@@ -76,14 +85,29 @@ func Whois(w http.ResponseWriter, r *http.Request) {
 		similarList, err = faceService.FindSimilar(faceID, requestBody.FaceListID)
 
 		bestMatch = getBestMatch(similarList)
+
+		if bestMatch != nil {
+			faces, _:= faceService.GetObjectFacesInAList(requestBody.FaceListID)
+			for _, face := range faces.PersistedFaces {
+				if face.PersistedFaceID == bestMatch.PersistedFaceID {
+					email = face.UserData
+					fmt.Printf("Todo ok, el email es: %s", email)
+				}
+			}
+			fmt.Printf("El FaceID detectado es: %s\n", bestMatch.PersistedFaceID)
+		} else {
+			err = fmt.Errorf("User Not Found")
+		}
+
 	}
 
-	var jsonValue []byte
-	if bestMatch != nil {
-		jsonValue, err = json.MarshalIndent(bestMatch, "", "\t")
-		w.Header().Set("Content-Type", "text/plain")
+	fmt.Printf("--------------------------Whois Response-----------------------------------")
+
+	if email != "" {
+		w.Header().Set("Content-Type", "application/json")
+    	result, _ := json.Marshal(map[string]string{"email": email})
+    	io.WriteString(w, string(result))
 		w.WriteHeader(200)
-		fmt.Fprintf(w, fmt.Sprintf("%s", jsonValue))
 	} else {
 		err = fmt.Errorf("User Not Found")
 		w.Header().Set("Content-Type", "text/plain")
@@ -105,12 +129,29 @@ func isSimilar(similarList []oxford.FaceSimilarResponseType) bool {
 func getBestMatch(similarList []oxford.FaceSimilarResponseType) *oxford.FaceSimilarResponseType {
 	var bestMatch *oxford.FaceSimilarResponseType = nil
 	for _, similar := range similarList {
+		var similar = similar
 		if bestMatch == nil || similar.Confidence > bestMatch.Confidence {
 			bestMatch = &similar
 		}
 	}
+
 	if bestMatch.Confidence <= 0.6 {
 		bestMatch = nil
 	}
+
 	return bestMatch
+}
+
+func toJSON(value interface{}, option printOption) string {
+
+	var jsonValue []byte
+
+	switch option {
+	case pretty:
+		jsonValue, _ = json.MarshalIndent(value, "", "\t")
+	case normal:
+		jsonValue, _ = json.Marshal(value)
+	}
+
+	return fmt.Sprintf("%s", jsonValue)
 }

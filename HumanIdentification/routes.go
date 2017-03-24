@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/lentregu/Equinox/HumanIdentification/face"
+	"github.com/lentregu/eq2017/HumanIdentification/face"
 
 	"net/http"
 )

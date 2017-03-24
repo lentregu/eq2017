@@ -9,7 +9,7 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/lentregu/Equinox/oxford"
+	"github.com/lentregu/eq2017/oxford"
 )
 
 type printOption int
@@ -37,9 +37,7 @@ var speakService = oxford.NewSpeak("af90809f8a0d4430ba2aabd44785ebc4")
 func getBestMatch(similarList []oxford.FaceSimilarResponseType) *oxford.FaceSimilarResponseType {
 	var bestMatch *oxford.FaceSimilarResponseType = nil
 	for _, similar := range similarList {
-		fmt.Println("--------------> ")
-		jsonValue, _ := json.MarshalIndent(similar, "", "\t")
-		fmt.Printf("%s", jsonValue)
+		var similar = similar
 		if bestMatch == nil || similar.Confidence > bestMatch.Confidence {
 			bestMatch = &similar
 		}
@@ -67,25 +65,36 @@ func whois() (string, error) {
 	}
 
 	bestMatch := getBestMatch(similarList)
-	var jsonValue []byte
+
+	var email string = ""
 	if bestMatch != nil {
-		jsonValue, err = json.MarshalIndent(bestMatch, "", "\t")
+		faces, _:= faceService.GetObjectFacesInAList(faceListID)
+		for _, face := range faces.PersistedFaces {
+			if face.PersistedFaceID == bestMatch.PersistedFaceID {
+				email = face.UserData
+			}
+		}
+
+		fmt.Printf("El FaceID detectado es: %s", bestMatch.PersistedFaceID)
+		fmt.Print(toJSON(faces, pretty))
+
 	} else {
 		err = fmt.Errorf("User Not Found")
 	}
 
-	return fmt.Sprintf("%s", jsonValue), err
+	return email, err
 }
 
 func addFace() (string, error) {
 
 	faceListID, err := readString("FaceList ID", oneWordRegExp)
 	imageFileName, err := readString("Face", oneWordRegExp)
+	email, err := readString("Email", oneWordRegExp)
 	if err != nil {
 		return "", err
 	}
 	//return faceService.AddFaceURL(faceListID, imageFileName)
-	return faceService.AddFace(faceListID, imageFileName)
+	return faceService.AddFace(faceListID, imageFileName, email)
 }
 
 func getFacesInAList() (string, error) {
@@ -144,7 +153,10 @@ func whoIsBase64() {
 		panic(err)
 	}
 	defer resp.Body.Close()
-	fmt.Print(resp.Body)
+	bodyObject := make(map[string]interface{})
+	json.NewDecoder(resp.Body).Decode(&bodyObject)
+	fmt.Println("WhoIsBase64 Result--------->")
+	fmt.Print(toJSON(bodyObject, pretty))
 }
 
 func fileToString(imageFileName string) (string, error) {
@@ -189,4 +201,18 @@ func readString(name string, wordRegExp string) (string, error) {
 	}
 
 	return value, err
+}
+
+func toJSON(value interface{}, option printOption) string {
+
+	var jsonValue []byte
+
+	switch option {
+	case pretty:
+		jsonValue, _ = json.MarshalIndent(value, "", "\t")
+	case normal:
+		jsonValue, _ = json.Marshal(value)
+	}
+
+	return fmt.Sprintf("%s", jsonValue)
 }

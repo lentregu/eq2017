@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 )
 
 const (
@@ -121,6 +122,7 @@ func POST(url string, queryParams map[string]string, apiKey string, headers map[
 
 	r := requestPOST(url, queryParams, apiKey, headers, contentType, body)
 	client := getClient()
+	fmt.Printf("--> %s\n\n", formatRequest(r))
 	return client.Do(r)
 }
 
@@ -157,9 +159,11 @@ func createHTTPRequest(method HTTPMethod) createRequest {
 			req.Header.Add(k, v)
 		}
 
+		q := req.URL.Query()
 		for k, v := range queryParams {
-			req.Header.Add(k, v)
-			req.URL.Query().Add(k, v)
+			q.Add(k,v)
+			req.URL.RawQuery = q.Encode()
+			//req.URL.Query().Add(k, v)
 		}
 
 		return req
@@ -212,4 +216,31 @@ func Base64ToByteArray(imgBase64Str string) ([]byte, error) {
 	fmt.Printf("\n\n-------------------")
 	binaryByteArray, err := base64.StdEncoding.DecodeString(imgBase64Str)
 	return binaryByteArray, err
+}
+
+// formatRequest generates ascii representation of a request
+func formatRequest(r *http.Request) string {
+ // Create return string
+ var request []string
+ // Add the request string
+ url := fmt.Sprintf("%v %v %v", r.Method, r.URL, r.Proto)
+ request = append(request, url)
+ // Add the host
+ request = append(request, fmt.Sprintf("Host: %v", r.Host))
+ // Loop through headers
+ for name, headers := range r.Header {
+   name = strings.ToLower(name)
+   for _, h := range headers {
+     request = append(request, fmt.Sprintf("%v: %v", name, h))
+   }
+ }
+ 
+ // If this is a POST, add post data
+ if r.Method == "POST" {
+    r.ParseForm()
+    request = append(request, "\n")
+    request = append(request, r.Form.Encode())
+ } 
+  // Return the request as a string
+  return strings.Join(request, "\n")
 }

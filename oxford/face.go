@@ -32,7 +32,7 @@ type faceType struct {
 	PersistedFaceID string `json:"persistedFaceId"`
 	UserData        string `json:"userData"`
 }
-type faceListContent struct {
+type FaceListContent struct {
 	FaceListID     string `json:"faceListId"`
 	Name           string `json:"name"`
 	UserData       string `json:"userData"`
@@ -201,7 +201,7 @@ func (f face) FindSimilar(faceID string, faceListID string) ([]FaceSimilarRespon
 	return similarList, err
 }
 
-func (f face) AddFace(faceListID string, imageFileName string) (persistedFaceID string, err error) {
+func (f face) AddFace(faceListID string, imageFileName string, email string) (persistedFaceID string, err error) {
 	url := GetResource(Face, V1, "facelists")
 	url = url + "/" + faceListID + "/persistedFaces"
 	imageByteArray, err := FileToByteArray(imageFileName)
@@ -210,8 +210,10 @@ func (f face) AddFace(faceListID string, imageFileName string) (persistedFaceID 
 		return "", err
 	}
 
-	resp, err := POST(url, nil, f.apiKey, M{"Content-Length": strconv.Itoa(len(imageByteArray))}, "application/octet-stream", imageByteArray)
-
+	fmt.Printf("Add Face -------->\n")
+	fmt.Printf("User data is: %s\n", email)
+	resp, err := POST(url, M{"userData": email}, f.apiKey, M{"Content-Length": strconv.Itoa(len(imageByteArray))}, "application/octet-stream", imageByteArray)
+ 
 	if err != nil {
 		return "", err
 	}
@@ -358,8 +360,36 @@ func (f face) GetFacesInAList(faceListID string) (list string, err error) {
 		fmt.Println(err)
 	}
 
-	facesInAList := faceListContent{}
+	facesInAList := FaceListContent{}
 	json.NewDecoder(resp.Body).Decode(&facesInAList)
 	return toJSON(facesInAList, pretty), err
+
+}
+
+func (f face) GetObjectFacesInAList(faceListID string) (list FaceListContent, err error) {
+	url := GetResource(Face, V1, "facelists")
+	url = url + "/" + faceListID
+
+	resp, err := GET(url, f.apiKey, nil, nil)
+
+	if err != nil {
+		return FaceListContent{}, err
+	}
+
+	//gologops.Info("Status:%s|Request:%s", resp.Status, req.URL.RequestURI())
+	switch resp.StatusCode {
+	case http.StatusOK:
+		gologops.InfoC(gologops.C{"op": "GetFaceList", "result": "OK"}, "%s", resp.Status)
+	default:
+		gologops.InfoC(gologops.C{"op": "GetFaceList", "result": "NOK"}, "%s", resp.Status)
+	}
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	facesInAList := FaceListContent{}
+	json.NewDecoder(resp.Body).Decode(&facesInAList)
+	return facesInAList, nil
 
 }
