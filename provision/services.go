@@ -61,7 +61,7 @@ func whois() (string, error) {
 	faceID, _ := faceService.DetectBinFromFile(imageFileName)
 	similarList, err := faceService.FindSimilar(faceID, faceListID)
 	if err != nil {
-		fmt.Printf("Error %v", err)
+		return "", err
 	}
 
 	bestMatch := getBestMatch(similarList)
@@ -137,7 +137,7 @@ func whoIsBase64() {
 	faceListID, err := readString("FaceList ID", oneWordRegExp)
 	imageFileName, err := readString("Face", oneWordRegExp)
 
-	url := "http://localhost:8080/whois"
+	url := "http://localhost:8080/whoisb64"
 	imgContent, _ := fileToString(imageFileName)
 
 	//var body inteface{}

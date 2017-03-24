@@ -173,6 +173,7 @@ func (f face) DetectBinFromFile(imageFileName string) (persistedFaceID string, e
 }
 
 func (f face) FindSimilar(faceID string, faceListID string) ([]FaceSimilarResponseType, error) {
+	fmt.Printf("FindSimilar........., faceID:%s, faceListID:%s", faceID, faceListID)
 	url := GetResource(Face, V1, "findsimilars")
 	faceSimilarBody := faceSimilarRequestType{FaceID: faceID, FaceListID: faceListID, MaxNumOfCandidatesReturned: 5}
 
@@ -186,18 +187,25 @@ func (f face) FindSimilar(faceID string, faceListID string) ([]FaceSimilarRespon
 	switch resp.StatusCode {
 	case http.StatusOK:
 		json.NewDecoder(resp.Body).Decode(&similarList)
-		fmt.Print(toJSON(similarList, pretty))
+		if len(similarList) == 0 {
+			fmt.Printf("SimilarList Length=%d", len(similarList))
+			err = fmt.Errorf("Not Found")
+		} else{
+			fmt.Print(toJSON(similarList, pretty))
+		}
 		gologops.InfoC(gologops.C{"op": "FindSimilar", "result": "OK"}, "%s", resp.Status)
 	default:
 		var similarErrorResponse APIErrorResponse
 		json.NewDecoder(resp.Body).Decode(&similarErrorResponse)
-		gologops.InfoC(gologops.C{"op": "FindSimilar", "result": "NOK"}, "%s", resp.Status)
+		//gologops.InfoC(gologops.C{"op": "FindSimilar", "result": "NOK"}, "%s", resp.Status)
 		fmt.Print(toJSON(similarErrorResponse, pretty))
+		err = fmt.Errorf("Not Found")
 	}
 
 	if err != nil {
 		fmt.Println(err)
 	}
+	fmt.Println("Sale de FindSimilar...")
 	return similarList, err
 }
 

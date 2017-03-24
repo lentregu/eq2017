@@ -34,6 +34,12 @@ var routes = Routes{
 		"whois",
 		"POST",
 		"/whois",
+		face.WhoisURL,
+	},
+	Route{
+		"whoisb64",
+		"POST",
+		"/whoisb64",
 		face.Whois,
 	},
 }
