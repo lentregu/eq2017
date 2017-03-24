@@ -158,18 +158,25 @@ func (f face) DetectBinFromFile(imageFileName string) (persistedFaceID string, e
 	switch resp.StatusCode {
 	case http.StatusOK:
 		json.NewDecoder(resp.Body).Decode(&faceDetectResponse)
-		gologops.InfoC(gologops.C{"op": "DetectBinFromFile", "result": "OK"}, "%s", resp.Status)
-		faceID = faceDetectResponse[0].FaceID
+		if len(faceDetectResponse) == 0 {
+			fmt.Printf("SimilarList Length=%d", len(faceDetectResponse))
+			err = fmt.Errorf("Not Found")
+		} else{
+			faceID = faceDetectResponse[0].FaceID
+			fmt.Print(toJSON(faceDetectResponse, pretty))
+		}
+		gologops.InfoC(gologops.C{"op": "DetectBinFromFile", "result": "OK"}, "%s", resp.Status)		
 	default:
 		var faceErrorResponse APIErrorResponse
 		json.NewDecoder(resp.Body).Decode(&faceErrorResponse)
 		gologops.InfoC(gologops.C{"op": "DetectBinFromFile", "result": "NOK"}, "%s", resp.Status)
 		//gologops.Info("Status:%s|Request:%s", resp.Status, req.URL.RequestURI())
 		fmt.Print(toJSON(faceErrorResponse, pretty))
+		err = fmt.Errorf("Not Found")
 	}
 
 	fmt.Printf("DetectBinFromFile return......->: %s\n.......", faceID)
-	return faceID, nil
+	return faceID, err
 }
 
 func (f face) FindSimilar(faceID string, faceListID string) ([]FaceSimilarResponseType, error) {

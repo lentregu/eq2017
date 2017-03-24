@@ -51,7 +51,8 @@ func FindSimilar(w http.ResponseWriter, r *http.Request) {
 
 	json.NewDecoder(r.Body).Decode(&requestBody)
 
-	faceService := oxford.NewFace("567c560aa85245418459b82634bc7a98")
+	//faceService := oxford.NewFace("567c560aa85245418459b82634bc7a98")	
+	faceService := oxford.NewFace("83dc246bac2b447782b5aab70604bc97")
 	faceID, _ := faceService.Detect(requestBody.URL)
 
 	fmt.Printf("El faceID es: %s\n", faceID)
@@ -76,8 +77,9 @@ func WhoisURL(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Print(toJSON(requestBody, pretty))
 
-	faceService := oxford.NewFace("567c560aa85245418459b82634bc7a98")
-
+	//faceService := oxford.NewFace("567c560aa85245418459b82634bc7a98")	
+	faceService := oxford.NewFace("83dc246bac2b447782b5aab70604bc97")
+	
 	var bestMatch *oxford.FaceSimilarResponseType = nil
 
 	var email string = ""
@@ -129,7 +131,8 @@ func Whois(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Print(toJSON(requestBody, pretty))
 
-	faceService := oxford.NewFace("567c560aa85245418459b82634bc7a98")
+	//faceService := oxford.NewFace("567c560aa85245418459b82634bc7a98")	
+	faceService := oxford.NewFace("83dc246bac2b447782b5aab70604bc97")
 
 	var bestMatch *oxford.FaceSimilarResponseType = nil
 	var similarList []oxford.FaceSimilarResponseType = nil

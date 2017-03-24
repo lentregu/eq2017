@@ -31,7 +31,9 @@ const oneWordRegExp = `^[^\t\n\f\r ]*$`
 
 const multipleWordsRegExp = `^.*$`
 
-var faceService = oxford.NewFace("567c560aa85245418459b82634bc7a98")
+//var faceService = oxford.NewFace("567c560aa85245418459b82634bc7a98")
+var	faceService = oxford.NewFace("83dc246bac2b447782b5aab70604bc97")
+
 var speakService = oxford.NewSpeak("af90809f8a0d4430ba2aabd44785ebc4")
 
 func getBestMatch(similarList []oxford.FaceSimilarResponseType) *oxford.FaceSimilarResponseType {
